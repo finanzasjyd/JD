@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="emerald-light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="html-title-brand">Daniela & Juan - Financial System PRO</title>
+    <!-- Tailwind CSS v4 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome Pro Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --transition-fast: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body[data-theme="emerald-light"] { 
+            background-color: #f1f5f9; color: #0f172a; 
+            --card-bg: #ffffff; --card-border: #e2e8f0; --card-hover-border: #0ea5e9;
+            --text-main: #0f172a; --text-muted: #64748b; --accent: #0284c7; --accent-glow: rgba(2, 132, 199, 0.08);
+            --badge-bg: #f0f9ff; --badge-border: #bae6fd; --badge-text: #0369a1;
+            --input-bg: #f8fafc; --nav-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        body[data-theme="slate-pro"] { 
+            background-color: #030712; color: #f1f5f9; 
+            --card-bg: #0d1527; --card-border: #1e293b; --card-hover-border: #38bdf8;
+            --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8; --accent-glow: rgba(56, 189, 248, 0.12);
+            --badge-bg: rgba(56, 189, 248, 0.1); --badge-border: rgba(56, 189, 248, 0.25); --badge-text: #38bdf8;
+            --input-bg: #050811; --nav-bg: rgba(3, 7, 18, 0.9);
+        }
+
+        .fintech-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .sticky-nav-header {
+            position: sticky; top: 0; z-index: 50;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background-color: var(--nav-bg);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .custom-badge {
+            background-color: var(--badge-bg);
+            border: 1px solid var(--badge-border);
+            color: var(--badge-text);
+        }
+
+        .fila-completada {
+            background-color: rgba(16, 185, 129, 0.08) !important;
+            border-left: 4px solid #10b981;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased pb-16 transition-colors duration-300">
+
+    <!-- PANTALLA DE BLOQUEO CON PIN -->
+    <div id="lock-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center space-y-6 shadow-2xl">
+            <div class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-2xl border border-slate-700 bg-slate-950 text-sky-400">
+                <i class="fa-solid fa-vault"></i>
+            </div>
+            <div>
+                <h2 id="lock-app-title" class="text-xl font-black text-white tracking-tight">Daniela & Juan PRO</h2>
+                <p class="text-xs text-slate-400 mt-1">Sistema Financiero Privado</p>
+            </div>
+            
+            <div class="flex justify-center gap-3">
+                <div class="pin-dot w-4 h-4 rounded-full border border-slate-700 bg-slate-950 transition-all"></div>
+                <div class="pin-dot w-4 h-4 rounded-full border border-slate-700 bg-slate-950 transition-all"></div>
+                <div class="pin-dot w-4 h-4 rounded-full border border-slate-700 bg-slate-950 transition-all"></div>
+                <div class="pin-dot w-4 h-4 rounded-full border border-slate-700 bg-slate-950 transition-all"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 px-1">
+                <button onclick="agregarDigitoPin('1')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">1</button>
+                <button onclick="agregarDigitoPin('2')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">2</button>
+                <button onclick="agregarDigitoPin('3')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">3</button>
+                <button onclick="agregarDigitoPin('4')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">4</button>
+                <button onclick="agregarDigitoPin('5')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">5</button>
+                <button onclick="agregarDigitoPin('6')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">6</button>
+                <button onclick="agregarDigitoPin('7')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">7</button>
+                <button onclick="agregarDigitoPin('8')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">8</button>
+                <button onclick="agregarDigitoPin('9')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">9</button>
+                <button onclick="borrarDigitoPin()" class="bg-slate-950 hover:bg-slate-800 text-slate-400 text-sm py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all"><i class="fa-solid fa-backspace"></i></button>
+                <button onclick="agregarDigitoPin('0')" class="bg-slate-950 hover:bg-slate-800 text-white font-mono text-xl py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">0</button>
+                <button onclick="limpiarPin()" class="bg-slate-950 hover:bg-slate-800 text-slate-400 text-xs font-bold py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">CLR</button>
+            </div>
+
+            <p id="pin-error" class="text-xs text-rose-400 hidden font-semibold">PIN incorrecto (Juan: 0... / Daniela: 1...)</p>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div id="main-app" class="hidden">
+        <header class="sticky-nav-header">
+            <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 text-sm font-bold">
+                        <i class="fa-solid fa-house-chimney"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-black tracking-tight text-[var(--text-main)]">
+                            <span id="header-brand-title">Daniela & Juan Finanzas</span>
+                        </h1>
+                        <p id="user-welcome" class="text-[10px] text-[var(--text-muted)] font-medium">Sesión Activa</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="abrirModalAdmin()" id="btn-icon-admin" title="Configuración" class="text-sky-500 hover:bg-sky-500/10 p-2 rounded-xl text-xs cursor-pointer transition-all hidden">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                    <select id="theme-selector" onchange="cambiarTemaVisual(this.value)" class="text-xs bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-2.5 py-1.5 text-[var(--text-main)] focus:outline-none cursor-pointer font-medium">
+                        <option value="emerald-light">☀️ Light Pro</option>
+                        <option value="slate-pro">🌙 Dark Pro</option>
+                    </select>
+                    <button onclick="bloquearApp()" title="Bloquear" class="text-[var(--text-muted)] hover:text-[var(--text-main)] p-2 rounded-xl text-xs cursor-pointer transition-colors">
+                        <i class="fa-solid fa-lock"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="max-w-5xl mx-auto px-4 pb-2.5 flex justify-between items-center gap-2">
+                <div id="tabs-container" class="flex gap-1.5 overflow-x-auto"></div>
+                <button onclick="abrirModalCrear()" id="btn-nuevo-item-tab" class="bg-sky-600 hover:bg-sky-500 text-white text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition-all whitespace-nowrap">
+                    <i class="fa-solid fa-plus"></i> Nuevo Bolsillo
+                </button>
+            </div>
+        </header>
+
+        <main class="max-w-5xl mx-auto px-4 mt-4 space-y-4">
+
+            <!-- VISTA PRESUPUESTO & BUCKETS -->
+            <div id="vista-presupuesto" class="space-y-4">
+                
+                <!-- KPI RESUMEN -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="fintech-card rounded-2xl p-3.5 text-center">
+                        <span class="text-[10px] text-[var(--text-muted)] block font-bold uppercase tracking-wider">Meta Total</span>
+                        <h4 id="dash-estimado" class="text-sm md:text-base font-black text-[var(--text-main)] font-mono mt-0.5">$0</h4>
+                    </div>
+                    <div class="fintech-card rounded-2xl p-3.5 text-center border-l-4 border-l-sky-500">
+                        <span class="text-[10px] text-[var(--text-muted)] block font-bold uppercase tracking-wider">Reunido (Fondeo)</span>
+                        <h4 id="dash-reunido" class="text-sm md:text-base font-black text-sky-600 font-mono mt-0.5">$0</h4>
+                    </div>
+                    <div class="fintech-card rounded-2xl p-4 text-center border-l-4 border-l-amber-500">
+                        <span class="text-[10px] text-[var(--text-muted)] block font-bold uppercase tracking-wider">Faltante Fondeo</span>
+                        <h4 id="dash-faltante" class="text-sm md:text-base font-black text-amber-600 font-mono mt-0.5">$0</h4>
+                    </div>
+                </div>
+
+                <!-- TABLA PRINCIPAL DE PRESUPUESTO -->
+                <section class="fintech-card rounded-2xl p-4 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 id="titulo-seccion" class="text-xs md:text-sm font-black text-[var(--text-main)] uppercase tracking-wider">Presupuesto</h3>
+                            <p id="progreso-texto" class="text-xs text-[var(--text-muted)]">Distribuido: $0</p>
+                        </div>
+                        <span id="total-seccion" class="text-xs custom-badge px-3 py-1 rounded-xl font-mono font-bold">Meta: $0</span>
+                    </div>
+
+                    <div class="w-full bg-[var(--input-bg)] rounded-full h-2.5 overflow-hidden shadow-inner">
+                        <div id="barra-progreso" class="h-2.5 rounded-full transition-all duration-500 bg-sky-500" style="width: 0%;"></div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b text-[10px] text-[var(--text-muted)] uppercase tracking-wider border-[var(--card-border)]">
+                                    <th class="py-2.5 px-2">Bolsillo / Ítem</th>
+                                    <th class="py-2.5 px-2">Meta Est.</th>
+                                    <th class="py-2.5 px-2">Reunido</th>
+                                    <th class="py-2.5 px-2">Pagado (Salida)</th>
+                                    <th class="py-2.5 px-2">Día</th>
+                                    <th class="py-2.5 px-2">Prio</th>
+                                    <th class="py-2.5 px-2 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-presupuesto-body" class="divide-y divide-[var(--card-border)] text-xs"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- VISTA REGISTRO DE INGRESOS Y MOVIMIENTOS -->
+            <div id="vista-acciones" class="space-y-4 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- DISTRIBUCIÓN INTELIGENTE / SUELDOS -->
+                    <section class="fintech-card rounded-2xl p-4 space-y-3">
+                        <h2 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                            <i class="fa-solid fa-coins text-sky-500"></i> Registrar Sueldo (Distribución Inteligente)
+                        </h2>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Monto (COP)</label>
+                                <input type="number" id="input-monto" placeholder="Ej. 4000000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] focus:outline-none focus:border-sky-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Fuente / Empleador</label>
+                                <select id="input-fuente" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] cursor-pointer">
+                                    <option value="Sueldo Empresa Juan">Sueldo Empresa Juan</option>
+                                    <option value="Sueldo Empresa Daniela">Sueldo Empresa Daniela</option>
+                                    <option value="Ingreso Extra Juan">Ingreso Extra Juan</option>
+                                    <option value="Ingreso Extra Daniela">Ingreso Extra Daniela</option>
+                                </select>
+                            </div>
+                            <button onclick="registrarMonetizacionInteligente()" class="w-full font-bold py-2.5 px-4 rounded-xl transition-all text-xs bg-sky-600 hover:bg-sky-500 text-white cursor-pointer shadow-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Distribuir Automático (Inteligente)
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- TRANSACCIÓN MANUAL AISLADA POR PRIVACIDAD -->
+                    <section class="fintech-card rounded-2xl p-4 space-y-3">
+                        <h2 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                            <i class="fa-solid fa-receipt text-amber-500"></i> Registrar Gasto o Ingreso Manual
+                        </h2>
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Tipo</label>
+                                    <select id="mov-tipo" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2.5 text-xs text-[var(--text-main)] cursor-pointer">
+                                        <option value="EGRESO">Egreso / Pago Real</option>
+                                        <option value="INGRESO">Ingreso Manual a Bolsillo</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Monto (COP)</label>
+                                    <input type="number" id="mov-monto" placeholder="Ej. 150000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)]">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Descripción</label>
+                                <input type="text" id="mov-desc" placeholder="Ej. Mercado, Servicios..." class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)]">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Bolsillo Destino (Privado)</label>
+                                <select id="mov-categoria" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] cursor-pointer"></select>
+                            </div>
+                            <button onclick="registrarMovimientoDiario()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-plus"></i> Guardar Transacción Manual
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- COMPROBANTES Y HISTORIAL AISLADO POR ROL -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <section id="seccion-comprobantes-comunes" class="fintech-card rounded-2xl p-4 space-y-3">
+                    <h3 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                        <i class="fa-solid fa-file-invoice text-sky-500"></i> Reportes de Distribución (Instrucción Banco)
+                    </h3>
+                    <div id="contenedor-historial-distribucion" class="space-y-2 max-h-64 overflow-y-auto">
+                        <p class="text-xs text-[var(--text-muted)] italic text-center py-4">Sin reportes.</p>
+                    </div>
+                </section>
+
+                <section id="seccion-historial-movimientos-wrapper" class="fintech-card rounded-2xl p-4 space-y-3">
+                    <h3 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-amber-500"></i> Auditoría Transaccional (<span id="rol-historial-texto">COMUN</span>)
+                    </h3>
+                    <div id="contenedor-historial-egresos" class="space-y-2 max-h-64 overflow-y-auto">
+                        <p class="text-xs text-[var(--text-muted)] italic text-center py-4">Sin movimientos.</p>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL CONFIG PRO -->
+    <div id="modal-admin" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-[var(--card-border)] pb-3">
+                <h3 class="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                    <i class="fa-solid fa-gears text-sky-500"></i> Configuración
+                </h3>
+                <button onclick="cerrarModalAdmin()" class="text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Nombre App</label>
+                    <input type="text" id="admin-nombre-app" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-main)]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Usuario 1</label>
+                    <input type="text" id="admin-nombre-u1" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-main)]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Usuario 2</label>
+                    <input type="text" id="admin-nombre-u2" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-main)]">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="cerrarModalAdmin()" class="bg-[var(--input-bg)] text-[var(--text-main)] px-4 py-2 rounded-xl text-xs font-medium cursor-pointer">Cancelar</button>
+                <button onclick="guardarConfiguracionAdmin()" class="font-bold text-white px-5 py-2 rounded-xl text-xs cursor-pointer bg-sky-600 hover:bg-sky-500">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BUCKET / ÍTEM -->
+    <div id="modal-item" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 id="modal-titulo" class="text-sm font-bold text-[var(--text-main)]">Configurar Bolsillo</h3>
+            <input type="hidden" id="modal-id">
+            <div>
+                <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Nombre del Bolsillo</label>
+                <input type="text" id="modal-concepto" placeholder="Ej. Mercado, Arriendo..." class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)]">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Meta Estimada (COP)</label>
+                    <input type="number" id="modal-monto" placeholder="Ej. 1000000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)]">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Ya Reunido (COP)</label>
+                    <input type="number" id="modal-ejecutado" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)]" placeholder="0">
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <label class="text-xs font-semibold text-[var(--text-muted)]">Porcentaje Fijo (%)</label>
+                    <span id="slider-val-label" class="text-xs font-mono font-bold text-sky-500">0%</span>
+                </div>
+                <input type="range" id="modal-porcentaje-fijo" min="0" max="100" value="0" class="w-full accent-sky-500 cursor-pointer" oninput="document.getElementById('slider-val-label').innerText = this.value + '%'">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Día Límite (1-31)</label>
+                    <input type="number" id="modal-dia" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)]" min="1" max="31" value="5">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Prioridad</label>
+                    <select id="modal-prioridad" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] cursor-pointer">
+                        <option value="1">P1 - Alta</option>
+                        <option value="2">P2 - Media</option>
+                        <option value="3">P3 - Ahorro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="cerrarModal()" class="bg-[var(--input-bg)] text-[var(--text-main)] px-4 py-2 rounded-xl text-xs font-medium cursor-pointer">Cancelar</button>
+                <button onclick="guardarItemModal()" class="font-bold text-white px-5 py-2 rounded-xl text-xs cursor-pointer bg-sky-600 hover:bg-sky-500">Guardar Bolsillo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE LÓGICA Y PRIVACIDAD -->
+    <script>
+        const SUPABASE_URL = 'https://hmvmvlzajdbiuzbuqdvq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhtdm12bHphamRiaXV6YnVxZHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyNDI0NzEsImV4cCI6MjEwOTgxODQ3MX0.tZxvQxj9RLwTjcJd3PqHx9ZtDh6GRltQyGJt85vFjvU';
+        
+        let supabaseClient = null;
+        let usuarioActual = null; // 'JUAN' o 'DANIELA'
+        let tabActual = 'COMUN';
+        let datosPresupuesto = [];
+        let pinIngresado = '';
+        
+        let configGlobal = {
+            nombreApp: 'Daniela & Juan Finanzas',
+            nombreU1: 'Juan',
+            nombreU2: 'Daniela'
+        };
+
+        function cambiarTemaVisual(tema) {
+            document.body.setAttribute('data-theme', tema);
+            localStorage.setItem('jj_theme', tema);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('jj_theme') || 'emerald-light';
+            document.body.setAttribute('data-theme', savedTheme);
+            const selector = document.getElementById('theme-selector');
+            if (selector) selector.value = savedTheme;
+            cargarConfiguracionLocal();
+        });
+
+        function cargarConfiguracionLocal() {
+            const guardado = localStorage.getItem('jj_config_global');
+            if (guardado) { try { configGlobal = JSON.parse(guardado); } catch(e) {} }
+            aplicarConfiguracionUI();
+        }
+
+        function aplicarConfiguracionUI() {
+            document.getElementById('html-title-brand').innerText = configGlobal.nombreApp;
+            document.getElementById('lock-app-title').innerText = configGlobal.nombreApp;
+            document.getElementById('header-brand-title').innerText = `${configGlobal.nombreU2} & ${configGlobal.nombreU1} Finanzas`;
+            document.getElementById('admin-nombre-app').value = configGlobal.nombreApp;
+            document.getElementById('admin-nombre-u1').value = configGlobal.nombreU1;
+            document.getElementById('admin-nombre-u2').value = configGlobal.nombreU2;
+        }
+
+        async function guardarConfiguracionAdmin() {
+            configGlobal.nombreApp = document.getElementById('admin-nombre-app').value || 'Daniela & Juan Finanzas';
+            configGlobal.nombreU1 = document.getElementById('admin-nombre-u1').value || 'Juan';
+            configGlobal.nombreU2 = document.getElementById('admin-nombre-u2').value || 'Daniela';
+
+            localStorage.setItem('jj_config_global', JSON.stringify(configGlobal));
+            aplicarConfiguracionUI();
+            construirTabsSegunRol();
+            cerrarModalAdmin();
+        }
+
+        function abrirModalAdmin() {
+            aplicarConfiguracionUI();
+            document.getElementById('modal-admin').classList.remove('hidden');
+        }
+
+        function cerrarModalAdmin() {
+            document.getElementById('modal-admin').classList.add('hidden');
+        }
+
+        function agregarDigitoPin(digito) {
+            if (pinIngresado.length < 4) {
+                pinIngresado += String(digito);
+                actualizarPuntosPin();
+                if (pinIngresado.length === 4) setTimeout(() => { verificarPin(); }, 150);
+            }
+        }
+        function borrarDigitoPin() {
+            if (pinIngresado.length > 0) { pinIngresado = pinIngresado.slice(0, -1); actualizarPuntosPin(); }
+        }
+        function limpiarPin() { pinIngresado = ''; actualizarPuntosPin(); }
+        function actualizarPuntosPin() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                if (index < pinIngresado.length) {
+                    dot.className = "pin-dot w-4 h-4 rounded-full bg-sky-400 border border-sky-300 shadow-sm transition-all";
+                } else {
+                    dot.className = "pin-dot w-4 h-4 rounded-full bg-slate-950 border border-slate-700 transition-all";
+                }
+            });
+        }
+        window.addEventListener('keydown', (e) => {
+            const lockScreen = document.getElementById('lock-screen');
+            if (lockScreen && !lockScreen.classList.contains('hidden')) {
+                if (!isNaN(e.key) && e.key >= '0' && e.key <= '9') agregarDigitoPin(e.key);
+                else if (e.key === 'Backspace') borrarDigitoPin();
+            }
+        });
+
+        function verificarPin() {
+            if (pinIngresado === '0101') {
+                usuarioActual = 'JUAN';
+                iniciarSesionExitosa(`${configGlobal.nombreU1}`);
+            } else if (pinIngresado === '1111') {
+                usuarioActual = 'DANIELA';
+                iniciarSesionExitosa(configGlobal.nombreU2);
+            } else {
+                document.getElementById('pin-error').classList.remove('hidden');
+                setTimeout(() => { limpiarPin(); }, 800);
+            }
+        }
+
+        function iniciarSesionExitosa(nombre) {
+            document.getElementById('lock-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('user-welcome').innerText = `Sesión: ${nombre}`;
+            if (usuarioActual === 'JUAN') {
+                document.getElementById('btn-icon-admin').classList.remove('hidden');
+            }
+            construirTabsSegunRol();
+            inicializarSupabase();
+        }
+
+        function construirTabsSegunRol() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = `
+                <button onclick="cambiarTab('COMUN')" id="btn-comun" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-sky-600 text-white cursor-pointer shadow-sm"><i class="fa-solid fa-house mr-1"></i> Hogar</button>
+                <button onclick="cambiarTab('JUAN')" id="btn-juan" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-user text-sky-500 mr-1"></i> ${configGlobal.nombreU1}</button>
+                <button onclick="cambiarTab('DANIELA')" id="btn-daniela" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-user text-emerald-500 mr-1"></i> ${configGlobal.nombreU2}</button>
+                <button onclick="cambiarTab('ACCIONES')" id="btn-acciones" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i> Registrar</button>
+            `;
+        }
+
+        function bloquearApp() {
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('lock-screen').classList.remove('hidden');
+            document.getElementById('btn-icon-admin').classList.add('hidden');
+            limpiarPin();
+            usuarioActual = null;
+        }
+
+        async function inicializarSupabase() {
+            try {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                await cargarPresupuestos();
+                await cargarHistorialSupabase();
+                await cargarMovimientosDiariosSupabase();
+            } catch (e) { console.error(e); }
+        }
+
+        async function cargarPresupuestos() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('presupuestos').select('*').order('dia_limite', { ascending: true });
+            datosPresupuesto = data || [];
+            poblarSelectCategoriasPrivado();
+            renderizarTabla();
+            actualizarDashboardYDisponibles();
+        }
+
+        // REGLA DE PRIVACIDAD: El selector manual solo muestra lo Común + lo del usuario activo
+        function poblarSelectCategoriasPrivado() {
+            const select = document.getElementById('mov-categoria');
+            if(!select) return;
+            select.innerHTML = '';
+            
+            const grupos = { 
+                'COMUN': '🏛️ Gastos Hogar', 
+            };
+            if (usuarioActual === 'JUAN') grupos['JUAN'] = `👤 ${configGlobal.nombreU1}`;
+            if (usuarioActual === 'DANIELA') grupos['DANIELA'] = `💎 ${configGlobal.nombreU2}`;
+
+            Object.keys(grupos).forEach(rolKey => {
+                const itemsGrupo = datosPresupuesto.filter(i => i.propietario.toUpperCase() === rolKey);
+                if (itemsGrupo.length > 0) {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = grupos[rolKey];
+                    itemsGrupo.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = `${item.concepto} (Meta: $${Number(item.monto_estimado).toLocaleString()})`;
+                        optgroup.appendChild(opt);
+                    });
+                    select.appendChild(optgroup);
+                }
+            });
+        }
+
+        function cambiarTab(propietario) {
+            tabActual = propietario;
+            ['comun', 'juan', 'daniela', 'acciones'].forEach(tab => {
+                const btn = document.getElementById(`btn-${tab}`);
+                if (btn) btn.className = "tab-btn px-3 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer";
+            });
+            const activeBtn = document.getElementById(`btn-${propietario.toLowerCase()}`);
+            if (activeBtn) activeBtn.className = "tab-btn px-3 py-1.5 font-bold text-xs rounded-xl bg-sky-600 text-white cursor-pointer shadow-sm";
+
+            const vistaPresupuesto = document.getElementById('vista-presupuesto');
+            const vistaAcciones = document.getElementById('vista-acciones');
+            const btnNuevoItem = document.getElementById('btn-nuevo-item-tab');
+            const rolTexto = document.getElementById('rol-historial-texto');
+
+            if (propietario === 'ACCIONES') {
+                vistaPresupuesto.classList.add('hidden');
+                vistaAcciones.classList.remove('hidden');
+                btnNuevoItem.classList.add('hidden');
+            } else {
+                vistaPresupuesto.classList.remove('hidden');
+                vistaAcciones.classList.add('hidden');
+                btnNuevoItem.classList.remove('hidden');
+                document.getElementById('titulo-seccion').innerText = `Presupuesto ${propietario === 'JUAN' ? configGlobal.nombreU1 : propietario === 'DANIELA' ? configGlobal.nombreU2 : 'del Hogar'}`;
+                if (rolTexto) rolTexto.innerText = propietario === 'JUAN' ? configGlobal.nombreU1 : propietario === 'DANIELA' ? configGlobal.nombreU2 : 'COMUN';
+            }
+            actualizarDashboardYDisponibles();
+            renderizarTabla();
+            cargarMovimientosDiariosSupabase();
+            cargarHistorialSupabase();
+        }
+
+        function actualizarDashboardYDisponibles() {
+            const rolVista = tabActual === 'ACCIONES' ? 'COMUN' : tabActual;
+            const itemsSeccion = datosPresupuesto.filter(i => i.propietario.toUpperCase() === rolVista);
+
+            let totalEstimado = itemsSeccion.reduce((acc, i) => acc + (Number(i.monto_estimado) || 0), 0);
+            let totalReunido = itemsSeccion.reduce((acc, i) => acc + (Number(i.monto_ejecutado) || 0), 0);
+            let faltanteFondeo = Math.max(0, totalEstimado - totalReunido);
+
+            document.getElementById('dash-estimado').innerText = `$${totalEstimado.toLocaleString()}`;
+            document.getElementById('dash-reunido').innerText = `$${totalReunido.toLocaleString()}`;
+            document.getElementById('dash-faltante').innerText = `$${faltanteFondeo.toLocaleString()}`;
+        }
+
+        function renderizarTabla() {
+            const tbody = document.getElementById('tabla-presupuesto-body');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            const rolObjetivo = tabActual === 'ACCIONES' ? 'COMUN' : tabActual;
+            const filtrados = datosPresupuesto.filter(item => item.propietario.toUpperCase() === rolObjetivo.toUpperCase());
+            let sumaEstimada = 0, sumaDistribuida = 0;
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-[var(--text-muted)] text-xs">No hay bolsillos en esta sección. Haz clic en "Nuevo Bolsillo".</td></tr>`;
+                return;
+            }
+
+            filtrados.forEach(item => {
+                const est = Number(item.monto_estimado) || 0;
+                const dis = Number(item.monto_ejecutado) || 0;
+                const pag = Number(item.monto_pagado) || 0;
+                const pct = item.porcentaje_fijo || item.porcentaje || 0;
+                sumaEstimada += est;
+                sumaDistribuida += dis;
+
+                const cumplido = pag >= est && est > 0;
+
+                const tr = document.createElement('tr');
+                tr.className = `transition-all hover:bg-[var(--input-bg)] ${cumplido ? 'fila-completada' : ''}`;
+                tr.innerHTML = `
+                    <td class="py-3 px-2 font-semibold text-[var(--text-main)] text-xs">
+                        ${item.concepto} 
+                        ${cumplido ? '<i class="fa-solid fa-circle-check text-emerald-500 ml-1" title="Meta cumplida"></i>' : ''}
+                    </td>
+                    <td class="py-3 px-2 font-mono text-xs text-[var(--text-muted)]">$${est.toLocaleString()}</td>
+                    <td class="py-3 px-2 font-mono text-xs text-sky-600 font-medium">$${dis.toLocaleString()} ${pct > 0 ? `<span class="block text-[9px] text-amber-600">Fijo: ${pct}%</span>` : ''}</td>
+                    <td class="py-3 px-2 font-mono text-xs text-amber-600 font-bold">$${pag.toLocaleString()}</td>
+                    <td class="py-3 px-2 text-[var(--text-muted)] text-xs">Día ${item.dia_limite || 1}</td>
+                    <td class="py-3 px-2"><span class="custom-badge text-[10px] px-2 py-0.5 rounded font-bold">P${item.prioridad || 1}</span></td>
+                    <td class="py-3 px-2 text-right space-x-1">
+                        <button onclick="abrirModalEditar('${item.id}')" class="text-[var(--text-muted)] hover:text-[var(--text-main)] p-1.5 text-xs cursor-pointer"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarItem('${item.id}')" class="text-[var(--text-muted)] hover:text-rose-500 p-1.5 text-xs cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('total-seccion').innerText = `Meta: $${sumaEstimada.toLocaleString()}`;
+            const porcentaje = sumaEstimada > 0 ? Math.min(Math.round((sumaDistribuida / sumaEstimada) * 100), 100) : 0;
+            document.getElementById('progreso-texto').innerText = `Reunido: $${sumaDistribuida.toLocaleString()} (${porcentaje}%)`;
+            document.getElementById('barra-progreso').style.width = `${porcentaje}%`;
+        }
+
+        async function registrarMovimientoDiario() {
+            const tipo = document.getElementById('mov-tipo').value;
+            const monto = Number(document.getElementById('mov-monto').value);
+            const desc = document.getElementById('mov-desc').value;
+            const categoriaId = document.getElementById('mov-categoria').value;
+
+            if (!monto || monto <= 0 || !desc) return alert('Por favor complete todos los campos.');
+            const item = datosPresupuesto.find(i => i.id == categoriaId);
+            if (!item) return;
+
+            if (tipo === 'EGRESO') {
+                await supabaseClient.from('presupuestos').update({ monto_pagado: (Number(item.monto_pagado) || 0) + monto }).eq('id', item.id);
+            } else {
+                await supabaseClient.from('presupuestos').update({ monto_ejecutado: (Number(item.monto_ejecutado) || 0) + monto }).eq('id', item.id);
+            }
+
+            const fechaStr = new Date().toLocaleString();
+            if (tipo === 'INGRESO') {
+                await supabaseClient.from('historial_distribuciones').insert([{
+                    fecha: fechaStr, fuente: `Ingreso Manual (${usuarioActual})`, monto_total: monto,
+                    detalles: JSON.stringify([{ destino: `[${item.propietario}] ${item.concepto} (${desc})`, monto: monto }])
+                }]);
+            }
+
+            await supabaseClient.from('movimientos_diarios').insert([{
+                propietario: item.propietario.toUpperCase(), tipo, concepto: `${item.concepto}: ${desc}`, monto, categoria_id: Number(item.id), fecha: fechaStr
+            }]);
+
+            alert('¡Transacción manual guardada con éxito!');
+            document.getElementById('mov-monto').value = '';
+            document.getElementById('mov-desc').value = '';
+            await cargarPresupuestos();
+            await cargarMovimientosDiariosSupabase();
+            await cargarHistorialSupabase();
+        }
+
+        async function anularMovimiento(movId, categoriaId, tipoMov, montoMov) {
+            if (!confirm('¿Revertir este movimiento?')) return;
+            
+            const { data: movData } = await supabaseClient.from('movimientos_diarios').select('*').eq('id', movId).single();
+            if (!movData) return;
+
+            const montoReal = Number(movData.monto || montoMov);
+            const tipoReal = movData.tipo || tipoMov;
+            const catIdMov = movData.categoria_id || categoriaId;
+
+            let item = datosPresupuesto.find(i => String(i.id) === String(catIdMov));
+
+            if (item) {
+                if (tipoReal === 'EGRESO') {
+                    const nuevoPagado = Math.max(0, (Number(item.monto_pagado) || 0) - montoReal);
+                    await supabaseClient.from('presupuestos').update({ monto_pagado: nuevoPagado }).eq('id', item.id);
+                } else {
+                    const nuevoEjecutado = Math.max(0, (Number(item.monto_ejecutado) || 0) - montoReal);
+                    await supabaseClient.from('presupuestos').update({ monto_ejecutado: nuevoEjecutado }).eq('id', item.id);
+                }
+            }
+
+            await supabaseClient.from('movimientos_diarios').delete().eq('id', movId);
+            await cargarPresupuestos();
+            await cargarMovimientosDiariosSupabase();
+            await cargarHistorialSupabase();
+        }
+
+        async function eliminarComprobanteIngreso(id) {
+            if (!confirm('¿Eliminar reporte?')) return;
+            await supabaseClient.from('historial_distribuciones').delete().eq('id', id);
+            await cargarHistorialSupabase();
+        }
+
+        // REGLA DE PRIVACIDAD: Historial de auditoría aislado estrictamente por pestaña
+        async function cargarMovimientosDiariosSupabase() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('movimientos_diarios').select('*').order('id', { ascending: false });
+            const contenedor = document.getElementById('contenedor-historial-egresos');
+            if (!contenedor) return;
+            if (!data) return;
+
+            let filtrados = [];
+            const rolVista = tabActual === 'ACCIONES' ? 'COMUN' : tabActual;
+
+            if (rolVista === 'COMUN') {
+                filtrados = data.filter(m => m.propietario === 'COMUN');
+            } else if (rolVista === 'JUAN') {
+                // Juan solo ve lo suyo y lo común (NUNCA ve los movimientos personales de Daniela)
+                filtrados = data.filter(m => m.propietario === 'JUAN' || m.propietario === 'COMUN');
+            } else if (rolVista === 'DANIELA') {
+                // Daniela solo ve lo suyo y lo común (NUNCA ve los movimientos personales de Juan)
+                filtrados = data.filter(m => m.propietario === 'DANIELA' || m.propietario === 'COMUN');
+            }
+
+            if (filtrados.length === 0) {
+                contenedor.innerHTML = `<p class="text-xs text-[var(--text-muted)] italic text-center py-4">Sin movimientos en esta sección.</p>`;
+                return;
+            }
+
+            contenedor.innerHTML = filtrados.map(mov => {
+                const esEgreso = mov.tipo === 'EGRESO';
+                const signo = esEgreso ? '-' : '+';
+                const colorClase = esEgreso ? 'text-amber-600' : 'text-sky-600';
+                return `
+                    <div class="flex justify-between items-center bg-[var(--input-bg)] rounded-xl p-2.5 text-xs">
+                        <div>
+                            <span class="text-[var(--text-main)] font-semibold block">[${mov.propietario}] ${mov.concepto}</span>
+                            <span class="text-[10px] text-[var(--text-muted)]">${mov.fecha}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono ${colorClase} font-bold">${signo}$${Number(mov.monto).toLocaleString()}</span>
+                            <button onclick="anularMovimiento('${mov.id}', '${mov.categoria_id}', '${mov.tipo}', ${mov.monto})" class="text-[var(--text-muted)] hover:text-rose-500 cursor-pointer" title="Revertir"><i class="fa-solid fa-rotate-left"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function abrirModalCrear() {
+            document.getElementById('modal-id').value = '';
+            document.getElementById('modal-concepto').value = '';
+            document.getElementById('modal-monto').value = '';
+            document.getElementById('modal-ejecutado').value = '0';
+            document.getElementById('modal-porcentaje-fijo').value = '0';
+            document.getElementById('slider-val-label').innerText = '0%';
+            document.getElementById('modal-dia').value = '5';
+            document.getElementById('modal-titulo').innerText = `Nuevo Bolsillo (${tabActual})`;
+            document.getElementById('modal-item').classList.remove('hidden');
+        }
+
+        function abrirModalEditar(id) {
+            const item = datosPresupuesto.find(i => i.id == id);
+            if (!item) return;
+            document.getElementById('modal-id').value = item.id;
+            document.getElementById('modal-concepto').value = item.concepto;
+            document.getElementById('modal-monto').value = item.monto_estimado;
+            document.getElementById('modal-ejecutado').value = item.monto_ejecutado || 0;
+            const pct = item.porcentaje_fijo || item.porcentaje || 0;
+            document.getElementById('modal-porcentaje-fijo').value = pct;
+            document.getElementById('slider-val-label').innerText = pct + '%';
+            document.getElementById('modal-dia').value = item.dia_limite;
+            document.getElementById('modal-prioridad').value = item.prioridad;
+            document.getElementById('modal-titulo').innerText = `Editar Bolsillo`;
+            document.getElementById('modal-item').classList.remove('hidden');
+        }
+
+        function cerrarModal() { document.getElementById('modal-item').classList.add('hidden'); }
+
+        async function guardarItemModal() {
+            const id = document.getElementById('modal-id').value;
+            const concepto = document.getElementById('modal-concepto').value;
+            const monto = Number(document.getElementById('modal-monto').value);
+            const ejecutado = Number(document.getElementById('modal-ejecutado').value) || 0;
+            const dia = Number(document.getElementById('modal-dia').value);
+            const prioridad = Number(document.getElementById('modal-prioridad').value);
+            const pctFijo = Number(document.getElementById('modal-porcentaje-fijo').value) || 0;
+
+            if (!concepto || isNaN(monto)) return alert('Por favor complete los campos obligatorios.');
+
+            const payload = {
+                concepto: concepto,
+                monto_estimado: monto,
+                monto_ejecutado: ejecutado,
+                monto_pagado: 0,
+                porcentaje_fijo: pctFijo,
+                dia_limite: dia,
+                prioridad: prioridad,
+                tipo_fecha: 'FIXED'
+            };
+
+            if (id) {
+                const { error } = await supabaseClient.from('presupuestos').update(payload).eq('id', id);
+                if (error) { alert('Error al actualizar: ' + error.message); return; }
+            } else {
+                payload.propietario = tabActual;
+                const { error } = await supabaseClient.from('presupuestos').insert([payload]);
+                if (error) { alert('Error al crear bolsillo: ' + error.message); return; }
+            }
+            cerrarModal();
+            await cargarPresupuestos();
+        }
+
+        async function eliminarItem(id) {
+            if (!confirm('¿Deseas eliminar este bolsillo?')) return;
+            await supabaseClient.from('presupuestos').delete().eq('id', id);
+            await cargarPresupuestos();
+        }
+
+        // MOTOR DE DISTRIBUCIÓN INTELIGENTE
+        async function registrarMonetizacionInteligente() {
+            const montoTotal = Number(document.getElementById('input-monto').value);
+            const fuente = document.getElementById('input-fuente').value;
+            if (!montoTotal || montoTotal <= 0) return alert('Por favor ingrese un monto válido.');
+
+            await supabaseClient.from('monetizaciones').insert([{ fuente, monto_total: montoTotal }]);
+
+            let dineroRestante = montoTotal;
+            let logDistribucion = [];
+            const fechaStr = new Date().toLocaleString();
+            
+            let personaIngresa = 'JUAN';
+            if (fuente.includes('Daniela')) personaIngresa = 'DANIELA';
+
+            let bolsillosObjetivo = datosPresupuesto.filter(i => 
+                i.propietario.toUpperCase() === personaIngresa || i.propietario.toUpperCase() === 'COMUN'
+            );
+
+            // PASO 1: Porcentajes fijos
+            let itemsConPorcentaje = bolsillosObjetivo.filter(i => (Number(i.porcentaje_fijo || i.porcentaje) || 0) > 0);
+            
+            for (let item of itemsConPorcentaje) {
+                if (dineroRestante <= 0) break;
+                let pctItem = Number(item.porcentaje_fijo || item.porcentaje);
+                let aporte = Math.round(montoTotal * (pctItem / 100));
+                if (aporte > dineroRestante) aporte = dineroRestante;
+
+                dineroRestante -= aporte;
+                let nuevoEjecutado = (Number(item.monto_ejecutado) || 0) + aporte;
+
+                await supabaseClient.from('presupuestos').update({ monto_ejecutado: nuevoEjecutado }).eq('id', item.id);
+                
+                await supabaseClient.from('movimientos_diarios').insert([{
+                    propietario: item.propietario.toUpperCase(), tipo: 'INGRESO', concepto: `Fijo ${pctItem}%: ${item.concepto}`, monto: aporte, categoria_id: Number(item.id), fecha: fechaStr
+                }]);
+
+                logDistribucion.push({ destino: `[${item.propietario}] ${item.concepto} (${pctItem}%)`, monto: aporte });
+            }
+
+            // PASO 2: Resto por Prioridad y Día Límite
+            let itemsLibres = bolsillosObjetivo.filter(i => (Number(i.porcentaje_fijo || i.porcentaje) || 0) === 0);
+            
+            if (dineroRestante > 0 && itemsLibres.length > 0) {
+                itemsLibres.sort((a, b) => (Number(a.prioridad || 1) - Number(b.prioridad || 1)) || (Number(a.dia_limite || 1) - Number(b.dia_limite || 1)));
+
+                for (let i = 0; i < itemsLibres.length; i++) {
+                    let item = itemsLibres[i];
+                    if (dineroRestante <= 0) break;
+
+                    let estimado = Number(item.monto_estimado) || 0;
+                    let ejecutado = Number(item.monto_ejecutado) || 0;
+                    let pendienteMeta = Math.max(0, estimado - ejecutado);
+
+                    let aporte = 0;
+                    if (i === itemsLibres.length - 1) {
+                        aporte = dineroRestante;
+                    } else {
+                        aporte = pendienteMeta > 0 ? Math.min(dineroRestante, pendienteMeta) : Math.min(dineroRestante, Math.round(dineroRestante / (itemsLibres.length - i)));
+                    }
+
+                    if (aporte <= 0) continue;
+                    dineroRestante -= aporte;
+                    let nuevoEjecutado = ejecutado + aporte;
+
+                    await supabaseClient.from('presupuestos').update({ monto_ejecutado: nuevoEjecutado }).eq('id', item.id);
+
+                    await supabaseClient.from('movimientos_diarios').insert([{
+                        propietario: item.propietario.toUpperCase(), tipo: 'INGRESO', concepto: `Distribución: ${item.concepto}`, monto: aporte, categoria_id: Number(item.id), fecha: fechaStr
+                    }]);
+
+                    logDistribucion.push({ destino: `[${item.propietario}] ${item.concepto}`, monto: aporte });
+                }
+            }
+
+            await supabaseClient.from('historial_distribuciones').insert([{
+                fecha: fechaStr, fuente, monto_total: montoTotal, detalles: JSON.stringify(logDistribucion)
+            }]);
+
+            alert('¡Distribución inteligente ejecutada con éxito!');
+            document.getElementById('input-monto').value = '';
+            await cargarPresupuestos();
+            await cargarMovimientosDiariosSupabase();
+            await cargarHistorialSupabase();
+            cambiarTab(personaIngresa);
+        }
+
+        // FILTRO DE HISTORIAL CORREGIDO PARA MOSTRAR INGRESOS A [COMUN] EN LA PESTAÑA HOGAR
+        async function cargarHistorialSupabase() {
+            if (!supabaseClient) return;
+            const { data } = await supabaseClient.from('historial_distribuciones').select('*').order('id', { ascending: false });
+            const contenedorComun = document.getElementById('contenedor-historial-distribucion');
+            if(!contenedorComun) return;
+
+            if (!data || data.length === 0) {
+                contenedorComun.innerHTML = `<p class="text-xs text-[var(--text-muted)] italic text-center py-4">Sin reportes.</p>`;
+                return;
+            }
+
+            const rolVista = tabActual === 'ACCIONES' ? 'COMUN' : tabActual;
+            
+            const filtrados = data.filter(reg => {
+                const fuenteU = String(reg.fuente || '').toUpperCase();
+                const detU = String(reg.detalles || '').toUpperCase();
+                
+                if (rolVista === 'COMUN') {
+                    // En Hogar se muestra todo lo que beneficie o vaya destinado a lo [COMUN] o venga de sueldo/ingreso común
+                    return detU.includes('[COMUN]') || fuenteU.includes('COMUN') || fuenteU.includes('HOGAR');
+                } else if (rolVista === 'JUAN') {
+                    return fuenteU.includes('JUAN') || detU.includes('[JUAN]') || fuenteU.includes('HOGAR') || detU.includes('[COMUN]');
+                } else if (rolVista === 'DANIELA') {
+                    return fuenteU.includes('DANIELA') || detU.includes('[DANIELA]') || fuenteU.includes('HOGAR') || detU.includes('[COMUN]');
+                }
+                return true;
+            });
+
+            if (filtrados.length === 0) {
+                contenedorComun.innerHTML = `<p class="text-xs text-[var(--text-muted)] italic text-center py-4">Sin reportes en esta sección.</p>`;
+            } else {
+                contenedorComun.innerHTML = filtrados.map(reg => {
+                    let items = [];
+                    try { items = JSON.parse(reg.detalles); } catch(e) { items = [{ destino: reg.detalles, monto: reg.monto_total }]; }
+
+                    let htmlDetalles = items.map(i => `
+                        <div class="flex justify-between items-center text-xs py-1 border-b border-[var(--card-border)]">
+                            <span class="text-[var(--text-muted)]">${i.destino}</span>
+                            <span class="font-mono text-sky-600 font-bold">+$${Number(i.monto).toLocaleString()}</span>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="bg-[var(--input-bg)] rounded-xl p-3 space-y-1.5">
+                            <div class="flex justify-between items-center pb-1.5 border-b border-[var(--card-border)]">
+                                <div>
+                                    <span class="text-xs text-[var(--text-main)] font-bold uppercase">${reg.fuente}: $${Number(reg.monto_total).toLocaleString()}</span>
+                                    <span class="text-[10px] text-[var(--text-muted)] block">${reg.fecha}</span>
+                                </div>
+                                <button onclick="eliminarComprobanteIngreso('${reg.id}')" class="text-[var(--text-muted)] hover:text-rose-500 p-1 text-xs cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                            <div class="space-y-1">${htmlDetalles}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    </script>
+</body>
+</html>
