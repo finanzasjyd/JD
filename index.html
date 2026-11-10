@@ -13,35 +13,80 @@
     
     <style>
         :root {
-            --transition-fast: cubic-bezier(0.16, 1, 0.3, 1);
+            --transition-smooth: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        /* TEMA 1: LIGHT PRO */
         body[data-theme="emerald-light"] { 
             background-color: #f1f5f9; color: #0f172a; 
             --card-bg: #ffffff; --card-border: #e2e8f0; --card-hover-border: #0ea5e9;
             --text-main: #0f172a; --text-muted: #64748b; --accent: #0284c7; --accent-glow: rgba(2, 132, 199, 0.08);
             --badge-bg: #f0f9ff; --badge-border: #bae6fd; --badge-text: #0369a1;
             --input-bg: #f8fafc; --nav-bg: rgba(255, 255, 255, 0.9);
+            --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         }
 
+        /* TEMA 2: DARK PRO */
         body[data-theme="slate-pro"] { 
             background-color: #030712; color: #f1f5f9; 
             --card-bg: #0d1527; --card-border: #1e293b; --card-hover-border: #38bdf8;
             --text-main: #f8fafc; --text-muted: #94a3b8; --accent: #38bdf8; --accent-glow: rgba(56, 189, 248, 0.12);
             --badge-bg: rgba(56, 189, 248, 0.1); --badge-border: rgba(56, 189, 248, 0.25); --badge-text: #38bdf8;
             --input-bg: #050811; --nav-bg: rgba(3, 7, 18, 0.9);
+            --shadow-card: 0 20px 45px -15px rgba(0, 0, 0, 0.7);
         }
 
+        @keyframes ambientGlowPulse {
+            0%, 100% { opacity: 0.35; transform: scale(1); }
+            50% { opacity: 0.65; transform: scale(1.06); }
+        }
+
+        .ambient-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1;
+            background: radial-gradient(circle at 50% 10%, var(--accent-glow) 0%, transparent 70%);
+            animation: ambientGlowPulse 8s infinite ease-in-out;
+        }
+
+        /* TARJETAS FINTECH CON EFECTO DESTELLO (SPOTLIGHT) */
         .fintech-card {
+            position: relative;
+            overflow: hidden;
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.3s var(--transition-smooth), border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Capa del destello que sigue al cursor / toque */
+        .fintech-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: radial-gradient(
+                500px circle at var(--x, 50%) var(--y, 50%),
+                rgba(14, 165, 233, 0.15),
+                transparent 40%
+            );
+            z-index: 1;
+        }
+
+        .fintech-card:hover::before,
+        .fintech-card.touch-active::before {
+            opacity: 1;
+        }
+
+        .fintech-card:hover {
+            border-color: var(--card-hover-border);
+            transform: translateY(-2px);
         }
 
         .sticky-nav-header {
             position: sticky; top: 0; z-index: 50;
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
             background-color: var(--nav-bg);
             border-bottom: 1px solid var(--card-border);
         }
@@ -58,12 +103,14 @@
         }
     </style>
 </head>
-<body class="font-sans antialiased pb-16 transition-colors duration-300">
+<body class="font-sans antialiased pb-24 transition-colors duration-300">
+
+    <div class="ambient-bg"></div>
 
     <!-- PANTALLA DE BLOQUEO CON PIN -->
     <div id="lock-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm w-full text-center space-y-6 shadow-2xl">
-            <div class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-2xl border border-slate-700 bg-slate-950 text-sky-400">
+            <div class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-inner border border-slate-700/60 bg-slate-950 text-sky-400">
                 <i class="fa-solid fa-vault"></i>
             </div>
             <div>
@@ -99,10 +146,10 @@
 
     <!-- APLICACIÓN PRINCIPAL -->
     <div id="main-app" class="hidden">
-        <header class="sticky-nav-header">
+        <header class="sticky-nav-header shadow-sm">
             <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-500 text-sm font-bold">
+                    <div class="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-500 text-sm font-bold shadow-inner">
                         <i class="fa-solid fa-house-chimney"></i>
                     </div>
                     <div>
@@ -114,7 +161,7 @@
                 </div>
                 
                 <div class="flex items-center gap-2">
-                    <button onclick="abrirModalAdmin()" id="btn-icon-admin" title="Configuración" class="text-sky-500 hover:bg-sky-500/10 p-2 rounded-xl text-xs cursor-pointer transition-all hidden">
+                    <button onclick="abrirModalAdmin()" id="btn-icon-admin" title="Configuración" class="text-sky-500 hover:bg-sky-500/10 p-2 rounded-xl text-xs cursor-pointer transition-all hidden hover:scale-105">
                         <i class="fa-solid fa-gear"></i>
                     </button>
                     <select id="theme-selector" onchange="cambiarTemaVisual(this.value)" class="text-xs bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-2.5 py-1.5 text-[var(--text-main)] focus:outline-none cursor-pointer font-medium">
@@ -128,59 +175,59 @@
             </div>
 
             <div class="max-w-5xl mx-auto px-4 pb-2.5 flex justify-between items-center gap-2">
-                <div id="tabs-container" class="flex gap-1.5 overflow-x-auto"></div>
-                <button onclick="abrirModalCrear()" id="btn-nuevo-item-tab" class="bg-sky-600 hover:bg-sky-500 text-white text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition-all whitespace-nowrap">
+                <div id="tabs-container" class="flex gap-2 overflow-x-auto"></div>
+                <button onclick="abrirModalCrear()" id="btn-nuevo-item-tab" class="bg-sky-600 hover:bg-sky-500 text-white text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all hover:scale-105 whitespace-nowrap">
                     <i class="fa-solid fa-plus"></i> Nuevo Bolsillo
                 </button>
             </div>
         </header>
 
-        <main class="max-w-5xl mx-auto px-4 mt-4 space-y-4">
+        <main class="max-w-5xl mx-auto px-4 mt-6 space-y-6">
 
             <!-- VISTA PRESUPUESTO & BUCKETS -->
-            <div id="vista-presupuesto" class="space-y-4">
+            <div id="vista-presupuesto" class="space-y-6">
                 
                 <!-- KPI RESUMEN -->
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="fintech-card rounded-2xl p-3.5 text-center">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="fintech-card rounded-2xl p-4 text-center">
                         <span class="text-[10px] text-[var(--text-muted)] block font-bold uppercase tracking-wider">Meta Total</span>
-                        <h4 id="dash-estimado" class="text-sm md:text-base font-black text-[var(--text-main)] font-mono mt-0.5">$0</h4>
+                        <h4 id="dash-estimado" class="text-base md:text-lg font-black text-[var(--text-main)] font-mono mt-1">$0</h4>
                     </div>
-                    <div class="fintech-card rounded-2xl p-3.5 text-center border-l-4 border-l-sky-500">
+                    <div class="fintech-card rounded-2xl p-4 text-center border-l-4 border-l-sky-500">
                         <span class="text-[10px] text-[var(--text-muted)] block font-bold uppercase tracking-wider">Reunido (Fondeo)</span>
-                        <h4 id="dash-reunido" class="text-sm md:text-base font-black text-sky-600 font-mono mt-0.5">$0</h4>
+                        <h4 id="dash-reunido" class="text-base md:text-lg font-black text-sky-600 font-mono mt-1">$0</h4>
                     </div>
                     <div class="fintech-card rounded-2xl p-4 text-center border-l-4 border-l-amber-500">
                         <span class="text-[10px] text-[var(--text-muted)] block font-bold uppercase tracking-wider">Faltante Fondeo</span>
-                        <h4 id="dash-faltante" class="text-sm md:text-base font-black text-amber-600 font-mono mt-0.5">$0</h4>
+                        <h4 id="dash-faltante" class="text-base md:text-lg font-black text-amber-600 font-mono mt-1">$0</h4>
                     </div>
                 </div>
 
                 <!-- TABLA PRINCIPAL DE PRESUPUESTO -->
-                <section class="fintech-card rounded-2xl p-4 space-y-3">
+                <section class="fintech-card rounded-3xl p-6 space-y-4">
                     <div class="flex justify-between items-center">
                         <div>
-                            <h3 id="titulo-seccion" class="text-xs md:text-sm font-black text-[var(--text-main)] uppercase tracking-wider">Presupuesto</h3>
-                            <p id="progreso-texto" class="text-xs text-[var(--text-muted)]">Distribuido: $0</p>
+                            <h3 id="titulo-seccion" class="text-sm font-black text-[var(--text-main)] uppercase tracking-wider">Presupuesto</h3>
+                            <p id="progreso-texto" class="text-xs text-[var(--text-muted)] mt-0.5">Distribuido: $0</p>
                         </div>
-                        <span id="total-seccion" class="text-xs custom-badge px-3 py-1 rounded-xl font-mono font-bold">Meta: $0</span>
+                        <span id="total-seccion" class="text-xs custom-badge px-3.5 py-1.5 rounded-xl font-mono font-bold">Meta: $0</span>
                     </div>
 
-                    <div class="w-full bg-[var(--input-bg)] rounded-full h-2.5 overflow-hidden shadow-inner">
-                        <div id="barra-progreso" class="h-2.5 rounded-full transition-all duration-500 bg-sky-500" style="width: 0%;"></div>
+                    <div class="w-full bg-[var(--input-bg)] rounded-full h-3 overflow-hidden border border-[var(--card-border)] shadow-inner">
+                        <div id="barra-progreso" class="h-3 rounded-full transition-all duration-700 bg-sky-500 shadow-md" style="width: 0%;"></div>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="border-b text-[10px] text-[var(--text-muted)] uppercase tracking-wider border-[var(--card-border)]">
-                                    <th class="py-2.5 px-2">Bolsillo / Ítem</th>
-                                    <th class="py-2.5 px-2">Meta Est.</th>
-                                    <th class="py-2.5 px-2">Reunido</th>
-                                    <th class="py-2.5 px-2">Pagado (Salida)</th>
-                                    <th class="py-2.5 px-2">Día</th>
-                                    <th class="py-2.5 px-2">Prio</th>
-                                    <th class="py-2.5 px-2 text-right">Acciones</th>
+                                <tr class="border-b text-[11px] text-[var(--text-muted)] uppercase tracking-wider border-[var(--card-border)]">
+                                    <th class="py-3.5 px-3">Bolsillo / Ítem</th>
+                                    <th class="py-3.5 px-3">Meta Est.</th>
+                                    <th class="py-3.5 px-3">Reunido</th>
+                                    <th class="py-3.5 px-3">Pagado (Salida)</th>
+                                    <th class="py-3.5 px-3">Día</th>
+                                    <th class="py-3.5 px-3">Prio</th>
+                                    <th class="py-3.5 px-3 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-presupuesto-body" class="divide-y divide-[var(--card-border)] text-xs"></tbody>
@@ -190,62 +237,62 @@
             </div>
 
             <!-- VISTA REGISTRO DE INGRESOS Y MOVIMIENTOS -->
-            <div id="vista-acciones" class="space-y-4 hidden">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="vista-acciones" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- DISTRIBUCIÓN INTELIGENTE / SUELDOS -->
-                    <section class="fintech-card rounded-2xl p-4 space-y-3">
-                        <h2 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                    <section class="fintech-card rounded-3xl p-6 space-y-4">
+                        <h2 class="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
                             <i class="fa-solid fa-coins text-sky-500"></i> Registrar Sueldo (Distribución Inteligente)
                         </h2>
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Monto (COP)</label>
-                                <input type="number" id="input-monto" placeholder="Ej. 4000000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] focus:outline-none focus:border-sky-500">
+                                <input type="number" id="input-monto" placeholder="Ej. 4000000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] focus:outline-none focus:border-sky-500 shadow-inner">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Fuente / Empleador</label>
-                                <select id="input-fuente" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] cursor-pointer">
+                                <select id="input-fuente" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] cursor-pointer shadow-inner">
                                     <option value="Sueldo Empresa Juan">Sueldo Empresa Juan</option>
                                     <option value="Sueldo Empresa Daniela">Sueldo Empresa Daniela</option>
                                     <option value="Ingreso Extra Juan">Ingreso Extra Juan</option>
                                     <option value="Ingreso Extra Daniela">Ingreso Extra Daniela</option>
                                 </select>
                             </div>
-                            <button onclick="registrarMonetizacionInteligente()" class="w-full font-bold py-2.5 px-4 rounded-xl transition-all text-xs bg-sky-600 hover:bg-sky-500 text-white cursor-pointer shadow-sm flex items-center justify-center gap-2">
+                            <button onclick="registrarMonetizacionInteligente()" class="w-full font-bold py-3 px-4 rounded-xl transition-all text-xs bg-sky-600 hover:bg-sky-500 text-white cursor-pointer shadow-md flex items-center justify-center gap-2 hover:scale-[1.02]">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> Distribuir Automático (Inteligente)
                             </button>
                         </div>
                     </section>
 
                     <!-- TRANSACCIÓN MANUAL AISLADA POR PRIVACIDAD -->
-                    <section class="fintech-card rounded-2xl p-4 space-y-3">
-                        <h2 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                    <section class="fintech-card rounded-3xl p-6 space-y-4">
+                        <h2 class="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
                             <i class="fa-solid fa-receipt text-amber-500"></i> Registrar Gasto o Ingreso Manual
                         </h2>
                         <div class="space-y-3">
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Tipo</label>
-                                    <select id="mov-tipo" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2.5 text-xs text-[var(--text-main)] cursor-pointer">
+                                    <select id="mov-tipo" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2.5 text-xs text-[var(--text-main)] cursor-pointer shadow-inner">
                                         <option value="EGRESO">Egreso / Pago Real</option>
                                         <option value="INGRESO">Ingreso Manual a Bolsillo</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Monto (COP)</label>
-                                    <input type="number" id="mov-monto" placeholder="Ej. 150000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)]">
+                                    <input type="number" id="mov-monto" placeholder="Ej. 150000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] shadow-inner">
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Descripción</label>
-                                <input type="text" id="mov-desc" placeholder="Ej. Mercado, Servicios..." class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)]">
+                                <input type="text" id="mov-desc" placeholder="Ej. Mercado, Servicios..." class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] shadow-inner">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Bolsillo Destino</label>
-                                <select id="mov-categoria" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] cursor-pointer"></select>
+                                <select id="mov-categoria" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] cursor-pointer shadow-inner"></select>
                             </div>
-                            <button onclick="registrarMovimientoDiario()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-plus"></i> Guardar Transacción Manual
+                            <button onclick="registrarMovimientoDiario()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md hover:scale-[1.02]">
+                                <i class="fa-solid fa-plus text-sky-400"></i> Guardar Transacción Manual
                             </button>
                         </div>
                     </section>
@@ -253,21 +300,21 @@
             </div>
 
             <!-- COMPROBANTES Y HISTORIAL (AUDITORÍA OCULTA EN REGISTRAR) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <section id="seccion-comprobantes-comunes" class="fintech-card rounded-2xl p-4 space-y-3">
-                    <h3 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <section id="seccion-comprobantes-comunes" class="fintech-card rounded-3xl p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
                         <i class="fa-solid fa-file-invoice text-sky-500"></i> Reportes de Distribución (Instrucción Banco)
                     </h3>
-                    <div id="contenedor-historial-distribucion" class="space-y-2 max-h-64 overflow-y-auto">
+                    <div id="contenedor-historial-distribucion" class="space-y-3 max-h-72 overflow-y-auto pr-1">
                         <p class="text-xs text-[var(--text-muted)] italic text-center py-4">Sin reportes.</p>
                     </div>
                 </section>
 
-                <section id="seccion-historial-movimientos-wrapper" class="fintech-card rounded-2xl p-4 space-y-3">
-                    <h3 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
+                <section id="seccion-historial-movimientos-wrapper" class="fintech-card rounded-3xl p-6 space-y-4">
+                    <h3 class="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
                         <i class="fa-solid fa-list-check text-amber-500"></i> Auditoría Transaccional (<span id="rol-historial-texto">COMUN</span>)
                     </h3>
-                    <div id="contenedor-historial-egresos" class="space-y-2 max-h-64 overflow-y-auto">
+                    <div id="contenedor-historial-egresos" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
                         <p class="text-xs text-[var(--text-muted)] italic text-center py-4">Sin movimientos.</p>
                     </div>
                 </section>
@@ -277,8 +324,8 @@
     </div>
 
     <!-- MODAL CONFIG PRO -->
-    <div id="modal-admin" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+    <div id="modal-admin" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-[var(--card-border)] pb-3">
                 <h3 class="text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
                     <i class="fa-solid fa-gears text-sky-500"></i> Configuración
@@ -288,58 +335,58 @@
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Nombre App</label>
-                    <input type="text" id="admin-nombre-app" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-main)]">
+                    <input type="text" id="admin-nombre-app" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] shadow-inner">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Usuario 1</label>
-                    <input type="text" id="admin-nombre-u1" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-main)]">
+                    <input type="text" id="admin-nombre-u1" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] shadow-inner">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Usuario 2</label>
-                    <input type="text" id="admin-nombre-u2" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2 text-xs text-[var(--text-main)]">
+                    <input type="text" id="admin-nombre-u2" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] shadow-inner">
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button onclick="cerrarModalAdmin()" class="bg-[var(--input-bg)] text-[var(--text-main)] px-4 py-2 rounded-xl text-xs font-medium cursor-pointer">Cancelar</button>
-                <button onclick="guardarConfiguracionAdmin()" class="font-bold text-white px-5 py-2 rounded-xl text-xs cursor-pointer bg-sky-600 hover:bg-sky-500">Guardar</button>
+                <button onclick="cerrarModalAdmin()" class="bg-[var(--input-bg)] border border-[var(--card-border)] text-[var(--text-main)] px-4 py-2 rounded-xl text-xs font-medium cursor-pointer">Cancelar</button>
+                <button onclick="guardarConfiguracionAdmin()" class="font-bold text-white px-5 py-2 rounded-xl text-xs cursor-pointer bg-sky-600 hover:bg-sky-500 shadow-md">Guardar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL BUCKET / ÍTEM -->
-    <div id="modal-item" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+    <div id="modal-item" class="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
             <h3 id="modal-titulo" class="text-sm font-bold text-[var(--text-main)]">Configurar Bolsillo</h3>
             <input type="hidden" id="modal-id">
             <div>
                 <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Nombre del Bolsillo</label>
-                <input type="text" id="modal-concepto" placeholder="Ej. Mercado, Arriendo..." class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)]">
+                <input type="text" id="modal-concepto" placeholder="Ej. Mercado, Arriendo..." class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] shadow-inner">
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Meta Estimada (COP)</label>
-                    <input type="number" id="modal-monto" placeholder="Ej. 1000000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)]">
+                    <input type="number" id="modal-monto" placeholder="Ej. 1000000" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] shadow-inner">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Ya Reunido (COP)</label>
-                    <input type="number" id="modal-ejecutado" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)]" placeholder="0">
+                    <input type="number" id="modal-ejecutado" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] shadow-inner" placeholder="0">
                 </div>
             </div>
             <div>
                 <div class="flex justify-between items-center mb-1">
                     <label class="text-xs font-semibold text-[var(--text-muted)]">Porcentaje Fijo (%)</label>
-                    <span id="slider-val-label" class="text-xs font-mono font-bold text-sky-500">0%</span>
+                    <span id="slider-val-label" class="text-xs font-mono font-bold text-sky-600">0%</span>
                 </div>
-                <input type="range" id="modal-porcentaje-fijo" min="0" max="100" value="0" class="w-full accent-sky-500 cursor-pointer" oninput="document.getElementById('slider-val-label').innerText = this.value + '%'">
+                <input type="range" id="modal-porcentaje-fijo" min="0" max="100" value="0" class="w-full accent-sky-600 cursor-pointer" oninput="document.getElementById('slider-val-label').innerText = this.value + '%'">
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Día Límite (1-31)</label>
-                    <input type="number" id="modal-dia" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)]" min="1" max="31" value="5">
+                    <input type="number" id="modal-dia" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] shadow-inner" min="1" max="31" value="5">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Prioridad</label>
-                    <select id="modal-prioridad" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] cursor-pointer">
+                    <select id="modal-prioridad" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] cursor-pointer shadow-inner">
                         <option value="1">P1 - Alta</option>
                         <option value="2">P2 - Media</option>
                         <option value="3">P3 - Ahorro</option>
@@ -347,13 +394,13 @@
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button onclick="cerrarModal()" class="bg-[var(--input-bg)] text-[var(--text-main)] px-4 py-2 rounded-xl text-xs font-medium cursor-pointer">Cancelar</button>
-                <button onclick="guardarItemModal()" class="font-bold text-white px-5 py-2 rounded-xl text-xs cursor-pointer bg-sky-600 hover:bg-sky-500">Guardar Bolsillo</button>
+                <button onclick="cerrarModal()" class="bg-[var(--input-bg)] border border-[var(--card-border)] text-[var(--text-main)] px-4 py-2 rounded-xl text-xs font-medium cursor-pointer">Cancelar</button>
+                <button onclick="guardarItemModal()" class="font-bold text-white px-5 py-2 rounded-xl text-xs cursor-pointer bg-sky-600 hover:bg-sky-500 shadow-md">Guardar Bolsillo</button>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT DE LÓGICA Y PRIVACIDAD -->
+    <!-- SCRIPT DE LÓGICA, PRIVACIDAD Y EFECTOS DESTELLO -->
     <script>
         const SUPABASE_URL = 'https://hmvmvlzajdbiuzbuqdvq.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhtdm12bHphamRiaXV6YnVxZHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyNDI0NzEsImV4cCI6MjEwOTgxODQ3MX0.tZxvQxj9RLwTjcJd3PqHx9ZtDh6GRltQyGJt85vFjvU';
@@ -381,7 +428,44 @@
             const selector = document.getElementById('theme-selector');
             if (selector) selector.value = savedTheme;
             cargarConfiguracionLocal();
+            
+            // Activar seguimiento del destello en tarjetas
+            inicializarEfectoDestello();
         });
+
+        // EFECTO DESTELLO (SPOTLIGHT) PARA PC Y MÓVILES
+        function inicializarEfectoDestello() {
+            const cards = document.querySelectorAll('.fintech-card');
+            cards.forEach(card => {
+                // Escritorio (Ratón)
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    card.style.setProperty('--x', `${e.clientX - rect.left}px`);
+                    card.style.setProperty('--y', `${e.clientY - rect.top}px`);
+                });
+
+                // Dispositivos Móviles (Táctil)
+                card.addEventListener('touchmove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const touch = e.touches[0];
+                    card.style.setProperty('--x', `${touch.clientX - rect.left}px`);
+                    card.style.setProperty('--y', `${touch.clientY - rect.top}px`);
+                    card.classList.add('touch-active');
+                }, { passive: true });
+
+                card.addEventListener('touchstart', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const touch = e.touches[0];
+                    card.style.setProperty('--x', `${touch.clientX - rect.left}px`);
+                    card.style.setProperty('--y', `${touch.clientY - rect.top}px`);
+                    card.classList.add('touch-active');
+                }, { passive: true });
+
+                card.addEventListener('touchend', () => {
+                    setTimeout(() => card.classList.remove('touch-active'), 400);
+                });
+            });
+        }
 
         function cargarConfiguracionLocal() {
             const guardado = localStorage.getItem('jj_config_global');
@@ -433,7 +517,7 @@
             const dots = document.querySelectorAll('.pin-dot');
             dots.forEach((dot, index) => {
                 if (index < pinIngresado.length) {
-                    dot.className = "pin-dot w-4 h-4 rounded-full bg-sky-400 border border-sky-300 shadow-sm transition-all";
+                    dot.className = "pin-dot w-4 h-4 rounded-full bg-sky-400 border border-sky-300 shadow-md transition-all";
                 } else {
                     dot.className = "pin-dot w-4 h-4 rounded-full bg-slate-950 border border-slate-700 transition-all";
                 }
@@ -467,12 +551,11 @@
             if (usuarioActual === 'JUAN') {
                 document.getElementById('btn-icon-admin').classList.remove('hidden');
             }
-            tabActual = 'COMUN'; // Por defecto arranca en Hogar
+            tabActual = 'COMUN';
             construirTabsSegunRol();
             inicializarSupabase();
         }
 
-        // REGLA DE PRIVACIDAD: Ocultar la pestaña de la otra persona según el PIN activo
         function construirTabsSegunRol() {
             const container = document.getElementById('tabs-container');
             let tabsHtml = `<button onclick="cambiarTab('COMUN')" id="btn-comun" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-sky-600 text-white cursor-pointer shadow-sm"><i class="fa-solid fa-house mr-1"></i> Hogar</button>`;
@@ -511,17 +594,15 @@
             poblarSelectCategoriasPrivado();
             renderizarTabla();
             actualizarDashboardYDisponibles();
+            setTimeout(inicializarEfectoDestello, 100); // Asegurar efectos en nuevos elementos renderizados
         }
 
-        // REGLA DE DESTINO: Muestra únicamente el nombre del bolsillo (sin corchetes, metas ni valores)
         function poblarSelectCategoriasPrivado() {
             const select = document.getElementById('mov-categoria');
             if(!select) return;
             select.innerHTML = '';
             
-            const grupos = { 
-                'COMUN': '🏛️ Gastos Hogar', 
-            };
+            const grupos = { 'COMUN': '🏛️ Gastos Hogar' };
             if (usuarioActual === 'JUAN') grupos['JUAN'] = `👤 ${configGlobal.nombreU1}`;
             if (usuarioActual === 'DANIELA') grupos['DANIELA'] = `💎 ${configGlobal.nombreU2}`;
 
@@ -533,7 +614,7 @@
                     itemsGrupo.forEach(item => {
                         const opt = document.createElement('option');
                         opt.value = item.id;
-                        opt.textContent = item.concepto; // Únicamente el nombre del bolsillo
+                        opt.textContent = item.concepto;
                         optgroup.appendChild(opt);
                     });
                     select.appendChild(optgroup);
@@ -545,10 +626,10 @@
             tabActual = propietario;
             ['comun', 'juan', 'daniela', 'acciones'].forEach(tab => {
                 const btn = document.getElementById(`btn-${tab}`);
-                if (btn) btn.className = "tab-btn px-3 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer";
+                if (btn) btn.className = "tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer";
             });
             const activeBtn = document.getElementById(`btn-${propietario.toLowerCase()}`);
-            if (activeBtn) activeBtn.className = "tab-btn px-3 py-1.5 font-bold text-xs rounded-xl bg-sky-600 text-white cursor-pointer shadow-sm";
+            if (activeBtn) activeBtn.className = "tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-sky-600 text-white cursor-pointer shadow-sm";
 
             const vistaPresupuesto = document.getElementById('vista-presupuesto');
             const vistaAcciones = document.getElementById('vista-acciones');
@@ -560,12 +641,12 @@
                 vistaPresupuesto.classList.add('hidden');
                 vistaAcciones.classList.remove('hidden');
                 btnNuevoItem.classList.add('hidden');
-                if (wrapperAuditoria) wrapperAuditoria.classList.add('hidden'); // Ocultar auditoría personal en la pestaña Registrar
+                if (wrapperAuditoria) wrapperAuditoria.classList.add('hidden');
             } else {
                 vistaPresupuesto.classList.remove('hidden');
                 vistaAcciones.classList.add('hidden');
                 btnNuevoItem.classList.remove('hidden');
-                if (wrapperAuditoria) wrapperAuditoria.classList.remove('hidden'); // Mostrar auditoría en pestañas de presupuesto
+                if (wrapperAuditoria) wrapperAuditoria.classList.remove('hidden');
                 document.getElementById('titulo-seccion').innerText = `Presupuesto ${propietario === 'JUAN' ? configGlobal.nombreU1 : propietario === 'DANIELA' ? configGlobal.nombreU2 : 'del Hogar'}`;
                 if (rolTexto) rolTexto.innerText = propietario === 'JUAN' ? configGlobal.nombreU1 : propietario === 'DANIELA' ? configGlobal.nombreU2 : 'COMUN';
             }
@@ -573,6 +654,7 @@
             renderizarTabla();
             cargarMovimientosDiariosSupabase();
             cargarHistorialSupabase();
+            setTimeout(inicializarEfectoDestello, 100);
         }
 
         function actualizarDashboardYDisponibles() {
@@ -614,18 +696,18 @@
                 const tr = document.createElement('tr');
                 tr.className = `transition-all hover:bg-[var(--input-bg)] ${cumplido ? 'fila-completada' : ''}`;
                 tr.innerHTML = `
-                    <td class="py-3 px-2 font-semibold text-[var(--text-main)] text-xs">
+                    <td class="py-3.5 px-3 font-semibold text-[var(--text-main)] text-xs">
                         ${item.concepto} 
                         ${cumplido ? '<i class="fa-solid fa-circle-check text-emerald-500 ml-1" title="Meta cumplida"></i>' : ''}
                     </td>
-                    <td class="py-3 px-2 font-mono text-xs text-[var(--text-muted)]">$${est.toLocaleString()}</td>
-                    <td class="py-3 px-2 font-mono text-xs text-sky-600 font-medium">$${dis.toLocaleString()} ${pct > 0 ? `<span class="block text-[9px] text-amber-600">Fijo: ${pct}%</span>` : ''}</td>
-                    <td class="py-3 px-2 font-mono text-xs text-amber-600 font-bold">$${pag.toLocaleString()}</td>
-                    <td class="py-3 px-2 text-[var(--text-muted)] text-xs">Día ${item.dia_limite || 1}</td>
-                    <td class="py-3 px-2"><span class="custom-badge text-[10px] px-2 py-0.5 rounded font-bold">P${item.prioridad || 1}</span></td>
-                    <td class="py-3 px-2 text-right space-x-1">
-                        <button onclick="abrirModalEditar('${item.id}')" class="text-[var(--text-muted)] hover:text-[var(--text-main)] p-1.5 text-xs cursor-pointer"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarItem('${item.id}')" class="text-[var(--text-muted)] hover:text-rose-500 p-1.5 text-xs cursor-pointer"><i class="fa-solid fa-trash"></i></button>
+                    <td class="py-3.5 px-3 font-mono text-xs text-[var(--text-muted)]">$${est.toLocaleString()}</td>
+                    <td class="py-3.5 px-3 font-mono text-xs text-sky-600 font-medium">$${dis.toLocaleString()} ${pct > 0 ? `<span class="block text-[10px] text-amber-600">Fijo: ${pct}%</span>` : ''}</td>
+                    <td class="py-3.5 px-3 font-mono text-xs text-amber-600 font-bold">$${pag.toLocaleString()}</td>
+                    <td class="py-3.5 px-3 text-[var(--text-muted)] text-xs">Día ${item.dia_limite || 1}</td>
+                    <td class="py-3.5 px-3"><span class="custom-badge text-[10px] px-2 py-0.5 rounded font-bold">P${item.prioridad || 1}</span></td>
+                    <td class="py-3.5 px-3 text-right space-x-1.5">
+                        <button onclick="abrirModalEditar('${item.id}')" class="text-[var(--text-muted)] hover:text-[var(--text-main)] p-1 text-xs cursor-pointer" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="eliminarItem('${item.id}')" class="text-[var(--text-muted)] hover:text-rose-500 p-1 text-xs cursor-pointer" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -675,14 +757,12 @@
 
         async function anularMovimiento(movId, categoriaId, tipoMov, montoMov) {
             if (!confirm('¿Revertir este movimiento?')) return;
-            
             const { data: movData } = await supabaseClient.from('movimientos_diarios').select('*').eq('id', movId).single();
             if (!movData) return;
 
             const montoReal = Number(movData.monto || montoMov);
             const tipoReal = movData.tipo || tipoMov;
             const catIdMov = movData.categoria_id || categoriaId;
-
             let item = datosPresupuesto.find(i => String(i.id) === String(catIdMov));
 
             if (item) {
@@ -711,8 +791,7 @@
             if (!supabaseClient) return;
             const { data } = await supabaseClient.from('movimientos_diarios').select('*').order('id', { ascending: false });
             const contenedor = document.getElementById('contenedor-historial-egresos');
-            if (!contenedor) return;
-            if (!data) return;
+            if (!contenedor || !data) return;
 
             let filtrados = [];
             const rolVista = tabActual === 'ACCIONES' ? 'COMUN' : tabActual;
@@ -735,7 +814,7 @@
                 const signo = esEgreso ? '-' : '+';
                 const colorClase = esEgreso ? 'text-amber-600' : 'text-sky-600';
                 return `
-                    <div class="flex justify-between items-center bg-[var(--input-bg)] rounded-xl p-2.5 text-xs">
+                    <div class="flex justify-between items-center bg-[var(--input-bg)] border border-[var(--card-border)] rounded-2xl p-3 text-xs shadow-sm">
                         <div>
                             <span class="text-[var(--text-main)] font-semibold block">[${mov.propietario}] ${mov.concepto}</span>
                             <span class="text-[10px] text-[var(--text-muted)]">${mov.fecha}</span>
@@ -945,8 +1024,8 @@
                     `).join('');
 
                     return `
-                        <div class="bg-[var(--input-bg)] rounded-xl p-3 space-y-1.5">
-                            <div class="flex justify-between items-center pb-1.5 border-b border-[var(--card-border)]">
+                        <div class="fintech-card rounded-2xl p-4 space-y-2">
+                            <div class="flex justify-between items-center pb-2 border-b border-[var(--card-border)]">
                                 <div>
                                     <span class="text-xs text-[var(--text-main)] font-bold uppercase">${reg.fuente}: $${Number(reg.monto_total).toLocaleString()}</span>
                                     <span class="text-[10px] text-[var(--text-muted)] block">${reg.fecha}</span>
