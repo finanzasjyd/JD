@@ -93,7 +93,7 @@
                 <button onclick="limpiarPin()" class="bg-slate-950 hover:bg-slate-800 text-slate-400 text-xs font-bold py-3.5 rounded-xl border border-slate-800 cursor-pointer active:scale-95 transition-all">CLR</button>
             </div>
 
-            <p id="pin-error" class="text-xs text-rose-400 hidden font-semibold">PIN incorrecto (Juan: 0... / Daniela: 1...)</p>
+            <p id="pin-error" class="text-xs text-rose-400 hidden font-semibold">PIN incorrecto</p>
         </div>
     </div>
 
@@ -241,7 +241,7 @@
                                 <input type="text" id="mov-desc" placeholder="Ej. Mercado, Servicios..." class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)]">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Bolsillo Destino (Privado)</label>
+                                <label class="block text-xs font-semibold text-[var(--text-muted)] mb-1">Bolsillo Destino</label>
                                 <select id="mov-categoria" class="w-full bg-[var(--input-bg)] border border-[var(--card-border)] rounded-xl px-3.5 py-2.5 text-xs text-[var(--text-main)] cursor-pointer"></select>
                             </div>
                             <button onclick="registrarMovimientoDiario()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2">
@@ -252,7 +252,7 @@
                 </div>
             </div>
 
-            <!-- COMPROBANTES Y HISTORIAL AISLADO POR ROL -->
+            <!-- COMPROBANTES Y HISTORIAL (AUDITORÍA OCULTA EN REGISTRAR) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <section id="seccion-comprobantes-comunes" class="fintech-card rounded-2xl p-4 space-y-3">
                     <h3 class="text-xs md:text-sm font-bold text-[var(--text-main)] flex items-center gap-2">
@@ -467,18 +467,24 @@
             if (usuarioActual === 'JUAN') {
                 document.getElementById('btn-icon-admin').classList.remove('hidden');
             }
+            tabActual = 'COMUN'; // Por defecto arranca en Hogar
             construirTabsSegunRol();
             inicializarSupabase();
         }
 
+        // REGLA DE PRIVACIDAD: Ocultar la pestaña de la otra persona según el PIN activo
         function construirTabsSegunRol() {
             const container = document.getElementById('tabs-container');
-            container.innerHTML = `
-                <button onclick="cambiarTab('COMUN')" id="btn-comun" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-sky-600 text-white cursor-pointer shadow-sm"><i class="fa-solid fa-house mr-1"></i> Hogar</button>
-                <button onclick="cambiarTab('JUAN')" id="btn-juan" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-user text-sky-500 mr-1"></i> ${configGlobal.nombreU1}</button>
-                <button onclick="cambiarTab('DANIELA')" id="btn-daniela" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-user text-emerald-500 mr-1"></i> ${configGlobal.nombreU2}</button>
-                <button onclick="cambiarTab('ACCIONES')" id="btn-acciones" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i> Registrar</button>
-            `;
+            let tabsHtml = `<button onclick="cambiarTab('COMUN')" id="btn-comun" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-sky-600 text-white cursor-pointer shadow-sm"><i class="fa-solid fa-house mr-1"></i> Hogar</button>`;
+            
+            if (usuarioActual === 'JUAN') {
+                tabsHtml += `<button onclick="cambiarTab('JUAN')" id="btn-juan" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-user text-sky-500 mr-1"></i> ${configGlobal.nombreU1}</button>`;
+            } else if (usuarioActual === 'DANIELA') {
+                tabsHtml += `<button onclick="cambiarTab('DANIELA')" id="btn-daniela" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-user text-emerald-500 mr-1"></i> ${configGlobal.nombreU2}</button>`;
+            }
+            
+            tabsHtml += `<button onclick="cambiarTab('ACCIONES')" id="btn-acciones" class="tab-btn px-3.5 py-1.5 font-bold text-xs rounded-xl bg-[var(--input-bg)] text-[var(--text-muted)] cursor-pointer"><i class="fa-solid fa-wand-magic-sparkles text-amber-500 mr-1"></i> Registrar</button>`;
+            container.innerHTML = tabsHtml;
         }
 
         function bloquearApp() {
@@ -507,7 +513,7 @@
             actualizarDashboardYDisponibles();
         }
 
-        // REGLA DE PRIVACIDAD: El selector manual solo muestra lo Común + lo del usuario activo
+        // REGLA DE DESTINO: Muestra únicamente el nombre del bolsillo (sin corchetes, metas ni valores)
         function poblarSelectCategoriasPrivado() {
             const select = document.getElementById('mov-categoria');
             if(!select) return;
@@ -527,7 +533,7 @@
                     itemsGrupo.forEach(item => {
                         const opt = document.createElement('option');
                         opt.value = item.id;
-                        opt.textContent = `${item.concepto} (Meta: $${Number(item.monto_estimado).toLocaleString()})`;
+                        opt.textContent = item.concepto; // Únicamente el nombre del bolsillo
                         optgroup.appendChild(opt);
                     });
                     select.appendChild(optgroup);
@@ -548,15 +554,18 @@
             const vistaAcciones = document.getElementById('vista-acciones');
             const btnNuevoItem = document.getElementById('btn-nuevo-item-tab');
             const rolTexto = document.getElementById('rol-historial-texto');
+            const wrapperAuditoria = document.getElementById('seccion-historial-movimientos-wrapper');
 
             if (propietario === 'ACCIONES') {
                 vistaPresupuesto.classList.add('hidden');
                 vistaAcciones.classList.remove('hidden');
                 btnNuevoItem.classList.add('hidden');
+                if (wrapperAuditoria) wrapperAuditoria.classList.add('hidden'); // Ocultar auditoría personal en la pestaña Registrar
             } else {
                 vistaPresupuesto.classList.remove('hidden');
                 vistaAcciones.classList.add('hidden');
                 btnNuevoItem.classList.remove('hidden');
+                if (wrapperAuditoria) wrapperAuditoria.classList.remove('hidden'); // Mostrar auditoría en pestañas de presupuesto
                 document.getElementById('titulo-seccion').innerText = `Presupuesto ${propietario === 'JUAN' ? configGlobal.nombreU1 : propietario === 'DANIELA' ? configGlobal.nombreU2 : 'del Hogar'}`;
                 if (rolTexto) rolTexto.innerText = propietario === 'JUAN' ? configGlobal.nombreU1 : propietario === 'DANIELA' ? configGlobal.nombreU2 : 'COMUN';
             }
@@ -698,7 +707,6 @@
             await cargarHistorialSupabase();
         }
 
-        // REGLA DE PRIVACIDAD: Historial de auditoría aislado estrictamente por pestaña
         async function cargarMovimientosDiariosSupabase() {
             if (!supabaseClient) return;
             const { data } = await supabaseClient.from('movimientos_diarios').select('*').order('id', { ascending: false });
@@ -712,10 +720,8 @@
             if (rolVista === 'COMUN') {
                 filtrados = data.filter(m => m.propietario === 'COMUN');
             } else if (rolVista === 'JUAN') {
-                // Juan solo ve lo suyo y lo común (NUNCA ve los movimientos personales de Daniela)
                 filtrados = data.filter(m => m.propietario === 'JUAN' || m.propietario === 'COMUN');
             } else if (rolVista === 'DANIELA') {
-                // Daniela solo ve lo suyo y lo común (NUNCA ve los movimientos personales de Juan)
                 filtrados = data.filter(m => m.propietario === 'DANIELA' || m.propietario === 'COMUN');
             }
 
@@ -813,7 +819,6 @@
             await cargarPresupuestos();
         }
 
-        // MOTOR DE DISTRIBUCIÓN INTELIGENTE
         async function registrarMonetizacionInteligente() {
             const montoTotal = Number(document.getElementById('input-monto').value);
             const fuente = document.getElementById('input-fuente').value;
@@ -832,7 +837,6 @@
                 i.propietario.toUpperCase() === personaIngresa || i.propietario.toUpperCase() === 'COMUN'
             );
 
-            // PASO 1: Porcentajes fijos
             let itemsConPorcentaje = bolsillosObjetivo.filter(i => (Number(i.porcentaje_fijo || i.porcentaje) || 0) > 0);
             
             for (let item of itemsConPorcentaje) {
@@ -853,7 +857,6 @@
                 logDistribucion.push({ destino: `[${item.propietario}] ${item.concepto} (${pctItem}%)`, monto: aporte });
             }
 
-            // PASO 2: Resto por Prioridad y Día Límite
             let itemsLibres = bolsillosObjetivo.filter(i => (Number(i.porcentaje_fijo || i.porcentaje) || 0) === 0);
             
             if (dineroRestante > 0 && itemsLibres.length > 0) {
@@ -900,7 +903,6 @@
             cambiarTab(personaIngresa);
         }
 
-        // FILTRO DE HISTORIAL CORREGIDO PARA MOSTRAR INGRESOS A [COMUN] EN LA PESTAÑA HOGAR
         async function cargarHistorialSupabase() {
             if (!supabaseClient) return;
             const { data } = await supabaseClient.from('historial_distribuciones').select('*').order('id', { ascending: false });
@@ -919,7 +921,6 @@
                 const detU = String(reg.detalles || '').toUpperCase();
                 
                 if (rolVista === 'COMUN') {
-                    // En Hogar se muestra todo lo que beneficie o vaya destinado a lo [COMUN] o venga de sueldo/ingreso común
                     return detU.includes('[COMUN]') || fuenteU.includes('COMUN') || fuenteU.includes('HOGAR');
                 } else if (rolVista === 'JUAN') {
                     return fuenteU.includes('JUAN') || detU.includes('[JUAN]') || fuenteU.includes('HOGAR') || detU.includes('[COMUN]');
